@@ -4,6 +4,8 @@
 #include "PingPongGameModeBase.h"
 #include "PingPongPlayerController.h"
 #include "PingPongPlayerPawn.h"
+#include "ScoreWidget.h"
+#include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 APingPongGameModeBase::APingPongGameModeBase()
@@ -41,6 +43,14 @@ void APingPongGameModeBase::PostLogin(APlayerController* NewPlayer)
     	currPlayer = Player1;
     	startPos = Player1Start;
     	UE_LOG(LogTemp, Warning, TEXT("PingPongGameMode: Init player 1"));
+        if (ScoreWidgetClass)
+        {
+        	ScoreWidget = CreateWidget<UScoreWidget>(GetWorld(), ScoreWidgetClass);
+            if (ScoreWidget)
+            {
+	            ScoreWidget->AddToViewport();
+            }
+        }
     }
     else if(Player2 == NULL)
     {
@@ -48,14 +58,21 @@ void APingPongGameModeBase::PostLogin(APlayerController* NewPlayer)
     	currPlayer = Player2;
     	startPos = Player2Start;
     	UE_LOG(LogTemp, Warning, TEXT("PingPongGameMode: Init player 2"));
+    	if (ScoreWidgetClass)
+    	{
+    		ScoreWidget = CreateWidget<UScoreWidget>(GetWorld(), ScoreWidgetClass);
+    		if (ScoreWidget)
+    		{
+    			ScoreWidget->AddToViewport();
+    		}
+    	}
     }
     else
     {
 		UE_LOG(LogTemp, Error, TEXT("PingPongGameMode: There are already two players in the game. New connections are not possible"));
 		return;
     }
-    APingPongPlayerPawn* newPawn =
-    Cast<APingPongPlayerPawn>(NewPlayer->GetPawn());
+    APingPongPlayerPawn* newPawn = Cast<APingPongPlayerPawn>(NewPlayer->GetPawn());
 	if(!newPawn)
     {
 		newPawn = world->SpawnActor<APingPongPlayerPawn>(DefaultPawnClass);
@@ -72,4 +89,17 @@ void APingPongGameModeBase::PostLogin(APlayerController* NewPlayer)
     {
 		UE_LOG(LogTemp, Error, TEXT("Start position not setted in PingPongGameMode!"));
     }
+}
+
+void APingPongGameModeBase::AddScore(int ScoreIncrease)
+{
+	if (Player1)
+	{
+		ScorePlayer1 += ScoreIncrease;
+	}
+
+	if (Player2)
+	{
+		ScorePlayer2 += ScoreIncrease;
+	}
 }

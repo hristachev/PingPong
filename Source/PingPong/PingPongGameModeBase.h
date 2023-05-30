@@ -8,6 +8,7 @@
 
 #include "PingPongGameModeBase.generated.h"
 
+class UScoreWidget;
 /**
  * 
  */
@@ -15,6 +16,11 @@ UCLASS()
 class PINGPONG_API APingPongGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
+
+private:
+	int ScorePlayer1 = 0;
+	int ScorePlayer2 = 0;
+	
 	
 protected:
 	
@@ -23,6 +29,12 @@ protected:
 	
     UPROPERTY()
     class APingPongPlayerController* Player2 = NULL;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> ScoreWidgetClass;
+
+	UPROPERTY()
+	UScoreWidget* ScoreWidget;
 	
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     APlayerStart* Player1Start;
@@ -35,4 +47,12 @@ public:
 	
     virtual void BeginPlay() override;
     virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	int GetScorePlayer1() { return ScorePlayer1; }
+	int GetScorePlayer2() { return ScorePlayer2; }
+	APingPongPlayerController* GetPlayer1() { return Player1; }
+	APingPongPlayerController* GetPlayer2() { return Player2; }
+	
+	UFUNCTION()
+	void AddScore(int ScoreIncrease);
 };
