@@ -23,4 +23,10 @@ public:
 	UTextBlock* PlayerScore;
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	UTextBlock* OpponentScore;
+
+	UFUNCTION(BlueprintCallable)
+	void UpdatePlayerScore(int newValue);
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateEnemyScore(int newValue);
 };

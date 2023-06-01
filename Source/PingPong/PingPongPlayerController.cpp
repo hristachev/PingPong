@@ -2,7 +2,11 @@
 
 
 #include "PingPongPlayerController.h"
+
+#include "PingPongGoal.h"
 #include "PingPongPlatform.h"
+#include "ScoreWidget.h"
+#include "Net/UnrealNetwork.h"
 
 
 APingPongPlayerController::APingPongPlayerController()
@@ -13,6 +17,54 @@ APingPongPlayerController::APingPongPlayerController()
 void APingPongPlayerController::SetStartTransfrorm(FTransform NewStartTransform)
 {
 	StartTransform = NewStartTransform;
+}
+
+void APingPongPlayerController::Initialize_Implementation(int8 NewPlayerID, APingPongGoal* NewGoal)
+{
+	if (Platform)
+	{
+		Platform->Destroy();
+	}
+	SpawnPlatform(PlatformClass);
+
+	PlayerID = NewPlayerID;
+	PongGoal = NewGoal;
+	PongGoal->SetPlayerID(PlayerID);
+}
+
+bool APingPongPlayerController::Initialize_Validate(int8 NewPlayerID, APingPongGoal* NewGoal)
+{
+	return (NewPlayerID != 0 && NewGoal != nullptr);
+
+}
+
+void APingPongPlayerController::Client_InitializeHUD_Implementation()
+{
+	if (!ScoreWidget)
+	{
+		ScoreWidget = CreateWidget<UScoreWidget>(this, WidgetClass);
+		if (ScoreWidget)
+		{
+			ScoreWidget->UpdatePlayerScore(0);
+			ScoreWidget->UpdateEnemyScore(0);
+			ScoreWidget->AddToViewport();
+		}
+	}
+}
+
+bool APingPongPlayerController::Client_InitializeHUD_Validate()
+{
+	return (WidgetClass != nullptr);
+}
+
+void APingPongPlayerController::UpdateWidgetPlayerScore_Implementation(int32 Score)
+{
+	ScoreWidget->UpdatePlayerScore(Score);
+}
+
+void APingPongPlayerController::UpdateWidgetEnemyScore_Implementation(int32 Score)
+{
+	ScoreWidget->UpdateEnemyScore(Score);
 }
 
 void APingPongPlayerController::SetupInputComponent()
@@ -29,6 +81,12 @@ void APingPongPlayerController::MoveRight(float AxisValue)
 		TEXT("APingPongPlayerController::MoveRight"));
 	}
 	Server_PlatformMoveRight(AxisValue);
+}
+
+void APingPongPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(APingPongPlayerController, PlayerID, COND_SimulatedOnly);
 }
 
 void APingPongPlayerController::Server_PlatformMoveRight_Implementation(float AxisValue)
@@ -68,17 +126,4 @@ void APingPongPlayerController::SpawnPlatform_Implementation(TSubclassOf<APingPo
 bool APingPongPlayerController::SpawnPlatform_Validate(TSubclassOf<APingPongPlatform> PlatfromClass)
 {
 	return PlatformClass != NULL;
-}
-
-void APingPongPlayerController::Initialize_Implementation()
-{
-	if(Platform)
-		Platform->Destroy();
-	
-    SpawnPlatform(PlatformClass);
-}
-
-bool APingPongPlayerController::Initialize_Validate()
-{
-	return true;
 }

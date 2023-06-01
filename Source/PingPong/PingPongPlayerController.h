@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "PingPongPlayerController.generated.h"
 
+class UScoreWidget;
+class APingPongGoal;
 /**
  * 
  */
@@ -23,6 +25,18 @@ protected:
 	
 	UPROPERTY()
 	class APingPongPlatform* Platform;
+
+	UPROPERTY(Replicated)
+	int8 PlayerID = 0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	APingPongGoal* PongGoal;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSubclassOf<UUserWidget> WidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UScoreWidget* ScoreWidget;
 	
 public:
 	
@@ -30,12 +44,24 @@ public:
 	
 	UFUNCTION()
 	void SetStartTransfrorm(FTransform NewStartTransform);
+
+	UFUNCTION()
+	FORCEINLINE int8 GetPlayerID() const { return PlayerID; }
 	
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Initialize();
+	void Initialize(int8 NewPlayerID, APingPongGoal* NewGoal);
+
+	UFUNCTION(Client, Reliable, WithValidation)
+	void Client_InitializeHUD();
 	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnPlatform(TSubclassOf<class APingPongPlatform> PlatfromClass);
+
+	UFUNCTION(Client, Reliable)
+	void UpdateWidgetPlayerScore(int32 Score);
+
+	UFUNCTION(Client, Reliable)
+	void UpdateWidgetEnemyScore(int32 Score);
 	
 	virtual void SetupInputComponent() override;
 protected:
@@ -44,5 +70,7 @@ protected:
 	void MoveRight(float AxisValue);
 	
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_PlatformMoveRight(float AxisValue);	
+	void Server_PlatformMoveRight(float AxisValue);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

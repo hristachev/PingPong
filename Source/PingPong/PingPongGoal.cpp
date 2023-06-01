@@ -9,6 +9,7 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APingPongGoal::APingPongGoal()
@@ -21,34 +22,38 @@ APingPongGoal::APingPongGoal()
 
 	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Goal Mesh"));
 	BodyMesh->SetupAttachment(RootComponent);
+	BodyMesh->SetIsReplicated(true);
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
 void APingPongGoal::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-void APingPongGoal::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void APingPongGoal::Server_GoalCheck_Implementation()
 {
-	Server_CheckOverlap(OtherActor, false);
+	auto GameMode = Cast<APingPongGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (GameMode != nullptr)
+	{
+		GameMode->PlayerGoal(PlayerID);
+	}
 }
 
-void APingPongGoal::Server_CheckOverlap_Implementation(AActor* _ActorRef, bool _bOverlapEnd)
+bool APingPongGoal::Server_GoalCheck_Validate()
 {
-	APingPongBall* BallActor = Cast<APingPongBall>(_ActorRef);
-	APingPongGameModeBase* CurrentGM = Cast<APingPongGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	return true;
+}
 
-	if (BallActor && CurrentGM->GetPlayer1())
-	{
-		CurrentGM->AddScore(1);
-	}
-	if (BallActor && CurrentGM->GetPlayer2())
-	{
-		CurrentGM->AddScore(1);
-	}
+void APingPongGoal::Server_SetPlayerID_Implementation(int8 ID)
+{
+	PlayerID = ID;
+}
+
+bool APingPongGoal::Server_SetPlayerID_Validate(int8 ID)
+{
+	return ID !=0;
 }
 
 // Called every frame
@@ -56,5 +61,21 @@ void APingPongGoal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void APingPongGoal::GoalCheck()
+{
+	Server_GoalCheck();
+}
+
+void APingPongGoal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(APingPongGoal, PlayerID, COND_SimulatedOnly);
+}
+
+void APingPongGoal::SetPlayerID(int8 ID)
+{
+	Server_SetPlayerID(ID);
 }
 

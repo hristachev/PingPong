@@ -17,7 +17,9 @@ protected:
 	UBoxComponent* BoxCollision;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	UStaticMeshComponent* BodyMesh;
-	
+
+	UPROPERTY(Replicated)
+	int8 PlayerID = 0;
 public:	
 	// Sets default values for this actor's properties
 	APingPongGoal();
@@ -26,13 +28,22 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
-	void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_GoalCheck();
 
-	UFUNCTION(Server, Reliable)
-	void Server_CheckOverlap(AActor* _ActorRef, bool _bOverlapEnd);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetPlayerID(int8 ID);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
+
+	UFUNCTION()
+	void GoalCheck();
+
+	void SetPlayerID(int8 ID);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class APlayerStart* PlayerStart;
 };

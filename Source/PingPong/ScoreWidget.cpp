@@ -13,23 +13,27 @@
 void UScoreWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	APingPongGameModeBase* CurrentGM = Cast<APingPongGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
 	
-	if (Cast<APingPongPlayerController>(GetOwningPlayer()) == CurrentGM->GetPlayer1())
+}
+
+void UScoreWidget::UpdatePlayerScore(int newValue)
+{
+	if (PlayerScore)
 	{
-		if (PlayerScore && OpponentScore)
-		{
-			PlayerScore->SetText(FText::FromString(FString::FromInt(CurrentGM->GetScorePlayer1())));
-			OpponentScore->SetText(FText::FromString(FString::FromInt(CurrentGM->GetScorePlayer2())));
-		}
+		TArray<FStringFormatArg> Args;
+		Args.Add(FStringFormatArg(newValue));
+		auto String { FString::Format(TEXT("{0}") , Args) };
+		PlayerScore->SetText(FText::FromString(String));
 	}
-	if (Cast<APingPongPlayerController>(GetOwningPlayer()) == CurrentGM->GetPlayer2())
+}
+
+void UScoreWidget::UpdateEnemyScore(int newValue)
+{
+	if (OpponentScore)
 	{
-		if (PlayerScore && OpponentScore)
-		{
-			PlayerScore->SetText(FText::FromString(FString::FromInt(CurrentGM->GetScorePlayer2())));
-			OpponentScore->SetText(FText::FromString(FString::FromInt(CurrentGM->GetScorePlayer1())));
-		}
+		TArray<FStringFormatArg> Args;
+		Args.Add(FStringFormatArg(newValue));
+		auto String { FString::Format(TEXT("{0}") , Args) };
+		OpponentScore->SetText(FText::FromString(String));
 	}
 }
