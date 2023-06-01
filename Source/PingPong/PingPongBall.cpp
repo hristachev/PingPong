@@ -51,11 +51,14 @@ void APingPongBall::Server_Move_Implementation(float DeltaTime)
 
 	if (!SetActorLocation(newLoc, true, &hitResult))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Ball %s Collided with %s"), *GetName(), *hitResult.GetActor()->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Ball %s Collided with %s"), *GetName(), *hitResult.GetComponent()->GetName());
 
 		if (auto playerGoal = Cast<APingPongGoal>(hitResult.GetActor()))
 		{
-			playerGoal->GoalCheck();
+			if (hitResult.GetComponent()->GetName() == "Goal Collision")
+			{
+				playerGoal->GoalCheck();
+			}
 		}
     	
 		FVector moveVector = currLoc - newLoc;
