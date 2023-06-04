@@ -11,6 +11,13 @@ class APingPongGoal;
 /**
  * 
  */
+UENUM()
+enum class PlayerWindowId
+{
+	WaitForAnotherPlayers = 0,
+	Game = 1
+};
+
 UCLASS()
 class PINGPONG_API APingPongPlayerController : public APlayerController
 {
@@ -53,6 +60,9 @@ public:
 
 	UFUNCTION(Client, Reliable, WithValidation)
 	void Client_InitializeHUD();
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetHUDWindow(PlayerWindowId windowId);
 	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnPlatform(TSubclassOf<class APingPongPlatform> PlatfromClass);

@@ -7,6 +7,7 @@
 #include "PingPongPlayerController.h"
 #include "PingPongPlayerPawn.h"
 #include "EngineUtils.h"
+#include "PingPongBall.h"
 #include "ScoreWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -99,6 +100,13 @@ void APingPongGameModeBase::PostLogin(APlayerController* NewPlayer)
     	currPlayer->SetStartTransfrorm(startPos->GetActorTransform());
     	currPlayer->Client_InitializeHUD();
     	currPlayer->Initialize(PlayerID, PlayerGoal);
+
+    	if (Player1 != nullptr && Player2 != nullptr)
+    	{
+    		Player1->Client_SetHUDWindow(PlayerWindowId::Game);
+    		Player2->Client_SetHUDWindow(PlayerWindowId::Game);
+    		StartGame();
+    	}
     }
     else
     {
@@ -133,5 +141,18 @@ void APingPongGameModeBase::PlayerGoal(int8 PlayerID)
 			}
 		}
 	}
+}
+
+bool APingPongGameModeBase::StartGame()
+{
+	TArray<APingPongBall*> FoundActors;
+	utils::FindAllActors<APingPongBall>(GetWorld(), FoundActors);
+	if (FoundActors.Num() > 0)
+	{
+		auto Ball { FoundActors.Last() };
+		Ball->StartMove();
+		return true;
+	}
+	return false;
 }
 
