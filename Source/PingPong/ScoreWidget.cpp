@@ -8,6 +8,7 @@
 #include "PingPongGameModeBase.h"
 #include "PingPongPlayerController.h"
 #include "Components/TextBlock.h"
+#include "Components/WidgetSwitcher.h"
 #include "Kismet/GameplayStatics.h"
 
 void UScoreWidget::NativeConstruct()
@@ -36,4 +37,9 @@ void UScoreWidget::UpdateEnemyScore(int newValue)
 		auto String { FString::Format(TEXT("{0}") , Args) };
 		OpponentScore->SetText(FText::FromString(String));
 	}
+}
+
+void UScoreWidget::SwitchWidget(int32 id)
+{
+	WidgetSwitcher->SetActiveWidgetIndex(id);
 }

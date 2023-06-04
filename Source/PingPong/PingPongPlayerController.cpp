@@ -19,6 +19,14 @@ void APingPongPlayerController::SetStartTransfrorm(FTransform NewStartTransform)
 	StartTransform = NewStartTransform;
 }
 
+void APingPongPlayerController::Client_SetHUDWindow_Implementation(PlayerWindowId windowId)
+{
+	if (ScoreWidget)
+	{
+		ScoreWidget->SwitchWidget(static_cast<int32>(windowId));
+	}
+}
+
 void APingPongPlayerController::Initialize_Implementation(int8 NewPlayerID, APingPongGoal* NewGoal)
 {
 	if (Platform)
