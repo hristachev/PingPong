@@ -18,6 +18,15 @@ protected:
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
     UStaticMeshComponent* BodyMesh;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSoftObjectPtr<UStaticMesh> BodyMeshRef;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	class UMaterial* BodyMaterial;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSoftObjectPtr<UMaterial> BodyMaterialRef;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball params")
 	float MoveSpeed = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball params")
@@ -32,6 +41,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void LoadBodyResources(UStaticMesh*& OutBodyMesh, UMaterial*& OutBodyMaterial);
 
 	UFUNCTION(Server, Reliable, WithValidation)
     void Server_Move(float DeltaTime);

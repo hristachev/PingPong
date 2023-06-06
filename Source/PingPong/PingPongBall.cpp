@@ -6,8 +6,11 @@
 #include "DrawDebugHelpers.h"
 #include "PingPongGoal.h"
 #include "Components/SphereComponent.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Particles/ParticleSystem.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -29,7 +32,44 @@ APingPongBall::APingPongBall()
 void APingPongBall::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UStaticMesh* LoadBodyMesh = nullptr;
+	UMaterial* LoadBodyMaterial = nullptr;
+	LoadBodyResources(LoadBodyMesh, LoadBodyMaterial);
+	if (LoadBodyMesh)
+	{
+		BodyMesh->SetStaticMesh(LoadBodyMesh);
+		if (LoadBodyMaterial)
+		{
+			BodyMesh->SetMaterial(0, LoadBodyMaterial);
+		}
+	}
+
+	HitEffect = LoadObject<UParticleSystem>(
+		nullptr,
+		TEXT("/Game/StarterContent/Particles/P_Explosion.P_Explosion"),
+		nullptr,
+		LOAD_None,
+		nullptr);
 	
+}
+
+void APingPongBall::LoadBodyResources(UStaticMesh*& OutBodyMesh, UMaterial*& OutBodyMaterial)
+{
+	FStreamableManager& StreamableManager = UAssetManager::Get().GetStreamableManager();
+	if (BodyMeshRef.IsPending())
+	{
+		const FSoftObjectPath& AssetMeshRef = BodyMeshRef.ToSoftObjectPath();
+		BodyMeshRef = Cast<UStaticMesh>(StreamableManager.LoadSynchronous(AssetMeshRef));
+		OutBodyMesh = BodyMeshRef.Get();
+	}
+
+	if (BodyMaterialRef.IsPending())
+	{
+		const FSoftObjectPath& AssetMaterialRef = BodyMaterialRef.ToSoftObjectPath();
+		BodyMeshRef = Cast<UMaterial>(StreamableManager.LoadSynchronous(AssetMaterialRef));
+		OutBodyMaterial = BodyMaterialRef.Get();
+	}
 }
 
 void APingPongBall::Server_StartMove_Implementation()
@@ -65,7 +105,7 @@ void APingPongBall::Server_Move_Implementation(float DeltaTime)
 		moveVector.Z = 0;
 		moveVector.Normalize();
     	
-		FVector resetPosition = currLoc + moveVector * DeltaTime * 5 * MoveSpeed;
+		FVector resetPosition = currLoc + moveVector * DeltaTime * 2 * MoveSpeed;
 		DrawDebugDirectionalArrow(
 			GetWorld(),
 			resetPosition + moveVector * 300,
