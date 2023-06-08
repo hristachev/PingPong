@@ -24,11 +24,7 @@ protected:
 	TSoftObjectPtr<UStaticMesh> BodyMeshRef;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
-<<<<<<< Updated upstream
 	UMaterial* BodyMaterial;
-=======
-	class UMaterial* BodyMaterial;
->>>>>>> Stashed changes
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> BodyMaterialRef;
@@ -55,7 +51,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-<<<<<<< Updated upstream
 	UFUNCTION(BlueprintCallable, CallInEditor)
 	void LoadBodyMesh();
 
@@ -67,10 +62,6 @@ protected:
 
 	void OnHitEffectLoaded();
 	
-=======
-	void LoadBodyResources(UStaticMesh*& OutBodyMesh, UMaterial*& OutBodyMaterial);
-
->>>>>>> Stashed changes
 	UFUNCTION(Server, Reliable, WithValidation)
     void Server_Move(float DeltaTime);
     UFUNCTION(Server, Reliable, WithValidation)
