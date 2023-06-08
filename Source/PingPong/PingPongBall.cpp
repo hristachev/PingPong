@@ -50,6 +50,7 @@ void APingPongBall::BeginPlay()
 {
 	Super::BeginPlay();
 
+<<<<<<< Updated upstream
 	LoadBodyMesh();
 	LoadHitEffect();
 	
@@ -103,6 +104,44 @@ void APingPongBall::OnHitEffectLoaded()
 		{
 			HitEffect = LoadedHitEffect;
 		}
+=======
+	UStaticMesh* LoadBodyMesh = nullptr;
+	UMaterial* LoadBodyMaterial = nullptr;
+	LoadBodyResources(LoadBodyMesh, LoadBodyMaterial);
+	if (LoadBodyMesh)
+	{
+		BodyMesh->SetStaticMesh(LoadBodyMesh);
+		if (LoadBodyMaterial)
+		{
+			BodyMesh->SetMaterial(0, LoadBodyMaterial);
+		}
+	}
+
+	HitEffect = LoadObject<UParticleSystem>(
+		nullptr,
+		TEXT("/Game/StarterContent/Particles/P_Explosion.P_Explosion"),
+		nullptr,
+		LOAD_None,
+		nullptr);
+	
+}
+
+void APingPongBall::LoadBodyResources(UStaticMesh*& OutBodyMesh, UMaterial*& OutBodyMaterial)
+{
+	FStreamableManager& StreamableManager = UAssetManager::Get().GetStreamableManager();
+	if (BodyMeshRef.IsPending())
+	{
+		const FSoftObjectPath& AssetMeshRef = BodyMeshRef.ToSoftObjectPath();
+		BodyMeshRef = Cast<UStaticMesh>(StreamableManager.LoadSynchronous(AssetMeshRef));
+		OutBodyMesh = BodyMeshRef.Get();
+	}
+
+	if (BodyMaterialRef.IsPending())
+	{
+		const FSoftObjectPath& AssetMaterialRef = BodyMaterialRef.ToSoftObjectPath();
+		BodyMeshRef = Cast<UMaterial>(StreamableManager.LoadSynchronous(AssetMaterialRef));
+		OutBodyMaterial = BodyMaterialRef.Get();
+>>>>>>> Stashed changes
 	}
 }
 
