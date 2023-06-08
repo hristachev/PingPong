@@ -7,6 +7,7 @@
 #include "ScoreWidget.generated.h"
 
 class UTextBlock;
+class UWidgetSwitcher;
 /**
  * 
  */
@@ -19,14 +20,23 @@ public:
 
 	virtual void NativeConstruct() override;
 
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	UTextBlock* PlayerScore;
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	UTextBlock* OpponentScore;
-
 	UFUNCTION(BlueprintCallable)
 	void UpdatePlayerScore(int newValue);
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateEnemyScore(int newValue);
+
+	UFUNCTION(BlueprintCallable)
+	void SwitchWidget(int32 id);
+	 
+protected:
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* PlayerScore;
+	
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* OpponentScore;
+
+	UPROPERTY(meta = (BindWidget))
+	UWidgetSwitcher* WidgetSwitcher;
+	
 };

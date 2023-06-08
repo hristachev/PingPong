@@ -7,6 +7,8 @@
 #include "Components/SphereComponent.h"
 #include "PingPongBall.generated.h"
 
+struct FStreamableHandle;
+
 UCLASS()
 class PINGPONG_API APingPongBall : public AActor
 {
@@ -22,18 +24,25 @@ protected:
 	TSoftObjectPtr<UStaticMesh> BodyMeshRef;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	class UMaterial* BodyMaterial;
+	UMaterial* BodyMaterial;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> BodyMaterialRef;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball params")
 	float MoveSpeed = 100;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball params")
 	UParticleSystem* HitEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSoftObjectPtr<UParticleSystem> HitEffectRef;
 	
 	UPROPERTY(Replicated)
 	bool IsMoving = true;
+
+	TArray<TSharedPtr<FStreamableHandle>> AssetHandles;
+	
 public:	
 	// Sets default values for this actor's properties
 	APingPongBall();
@@ -42,8 +51,17 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void LoadBodyResources(UStaticMesh*& OutBodyMesh, UMaterial*& OutBodyMaterial);
+	UFUNCTION(BlueprintCallable, CallInEditor)
+	void LoadBodyMesh();
 
+	void OnBodyMeshLoaded();
+
+	UMaterial* LoadBodyMaterial();
+
+	void LoadHitEffect();
+
+	void OnHitEffectLoaded();
+	
 	UFUNCTION(Server, Reliable, WithValidation)
     void Server_Move(float DeltaTime);
     UFUNCTION(Server, Reliable, WithValidation)
@@ -59,8 +77,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
     void StartMove();
+	
     UFUNCTION(BlueprintCallable)
     void StopMove();
-    virtual void GetLifetimeReplicatedProps(TArray< class FLifetimeProperty > &OutLifetimeProps) const;
 	
+    virtual void GetLifetimeReplicatedProps(TArray< class FLifetimeProperty > &OutLifetimeProps) const override;
 };

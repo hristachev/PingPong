@@ -7,6 +7,7 @@
 #include "PingPongPlayerController.h"
 #include "PingPongPlayerPawn.h"
 #include "EngineUtils.h"
+#include "PingPongBall.h"
 #include "ScoreWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -39,70 +40,84 @@ void APingPongGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	UWorld* world = GetWorld();
-    if(world && (!Player1Start || !Player2Start))
-    {
-    	TArray<AActor*> foundActors;
-    	UGameplayStatics::GetAllActorsOfClass(GetWorld(),
-    	APlayerStart::StaticClass(), foundActors);
-    	if(foundActors.Num() > 0)
-    		Player1Start = (APlayerStart*)foundActors[0];
-    	if(foundActors.Num() > 1)
-    		Player2Start = (APlayerStart*)foundActors[1];
-    }
-    APingPongPlayerController * currPlayer;
-    APlayerStart* startPos;
-	int8 PlayerID;
-    if(Player1 == nullptr)
-    {
-    	Player1 = (APingPongPlayerController*)NewPlayer;
-    	PlayerID = 1;
-    	currPlayer = Player1;
-    	startPos = Player1Start;
-    	UE_LOG(LogTemp, Warning, TEXT("PingPongGameMode: Init player 1"));
-    }
-    else if(Player2 == nullptr)
-    {
-    	Player2 = (APingPongPlayerController*)NewPlayer;
-    	PlayerID = 2;
-    	currPlayer = Player2;
-    	startPos = Player2Start;
-    	UE_LOG(LogTemp, Warning, TEXT("PingPongGameMode: Init player 2"));
-    }
-    else
-    {
-		UE_LOG(LogTemp, Error, TEXT("PingPongGameMode: There are already two players in the game. New connections are not possible"));
-		return;
-    }
-    APingPongPlayerPawn* newPawn = Cast<APingPongPlayerPawn>(NewPlayer->GetPawn());
-	if(!newPawn)
-    {
-		newPawn = world->SpawnActor<APingPongPlayerPawn>(DefaultPawnClass);
-    }
-	TArray<APingPongGoal*> FoundGoalActors;
-	utils::FindAllActors<APingPongGoal>(world, FoundGoalActors);
-	auto FindGoalByPlayerStart = [](const TArray<APingPongGoal*>& Array, const APlayerStart* SearchObject)
+	UWorld* World { GetWorld() };
+	if(World && (!Player1Start || !Player2Start))
 	{
-		auto Result = Array.FindByPredicate([&](const APingPongGoal *Goal)
+		TArray<APlayerStart*> FoundActors;
+		utils::FindAllActors<APlayerStart>(World, FoundActors);
+		if(FoundActors.Num() > 0)
 		{
-			return Goal->PlayerStart == SearchObject;
+			Player1Start = FoundActors[0];
+		}
+		if(FoundActors.Num() > 1)
+		{
+			Player2Start = FoundActors[1];
+		}
+	}
+	APingPongPlayerController* CurrPlayer;
+	APlayerStart* StartPos;
+	int32 PlayerID;
+	
+	if (Player1 == nullptr)
+	{
+		Player1 = Cast<APingPongPlayerController>(NewPlayer);
+		PlayerID = 1;
+		CurrPlayer = Player1;
+		StartPos = Player1Start;
+		UE_LOG(LogTemp, Warning, TEXT("PingPongGameMode: Init player 1"));
+	}
+	else if (Player2 == nullptr)
+	{
+		Player2 = Cast<APingPongPlayerController>(NewPlayer);
+		PlayerID = 2;
+		CurrPlayer = Player2;
+		StartPos = Player2Start;
+		UE_LOG(LogTemp, Warning, TEXT("PingPongGameMode: Init player 2"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error,
+			TEXT("PingPongGameMode: There are already two players in the game. New connections are not possible"));
+		return;
+	}
+	
+	APingPongPlayerPawn* newPawn { Cast<APingPongPlayerPawn>(NewPlayer->GetPawn()) };
+	if (!newPawn)
+	{
+		newPawn = World->SpawnActor<APingPongPlayerPawn>(DefaultPawnClass);
+	}
+
+	TArray<APingPongGoal*> FoundGateActors;
+	utils::FindAllActors<APingPongGoal>(World, FoundGateActors);
+	auto FindGateByPlayerStart = [](const TArray<APingPongGoal*>& Array, const APlayerStart* SearchObject)
+	{
+		auto Result = Array.FindByPredicate([&](const APingPongGoal *Gate)
+		{
+			return Gate->PlayerStart == SearchObject;
 		});
 		return Result != nullptr ? *Result : nullptr;
 	};
 	
-    if(newPawn)
+	if (newPawn)
+	{
+		auto PlayerGate { FindGateByPlayerStart(FoundGateActors, StartPos) }; 
+		newPawn->SetActorLocation(StartPos->GetActorLocation());
+		newPawn->SetActorRotation(StartPos->GetActorRotation());
+		NewPlayer->SetPawn(newPawn);
+		CurrPlayer->SetStartTransfrorm(StartPos->GetActorTransform());
+		CurrPlayer->Client_InitializeHUD();
+		CurrPlayer->Initialize(PlayerID, PlayerGate);
+
+		if (Player1 != nullptr && Player2 != nullptr)
+		{
+			Player1->Client_SetHUDWindow(EPlayerWindowId::Game);
+			Player2->Client_SetHUDWindow(EPlayerWindowId::Game);
+			StartGame();
+		}
+	}
+	else
     {
-    	auto PlayerGoal = FindGoalByPlayerStart(FoundGoalActors, startPos);
-    	newPawn->SetActorLocation(startPos->GetActorLocation());
-    	newPawn->SetActorRotation(startPos->GetActorRotation());
-    	NewPlayer->SetPawn(newPawn);
-    	currPlayer->SetStartTransfrorm(startPos->GetActorTransform());
-    	currPlayer->Client_InitializeHUD();
-    	currPlayer->Initialize(PlayerID, PlayerGoal);
-    }
-    else
-    {
-		UE_LOG(LogTemp, Error, TEXT("Start position not setted in PingPongGameMode!"));
+	    UE_LOG(LogTemp, Error, TEXT("Start position not setted in PingPongGameMode!"));
     }
 }
 
@@ -133,5 +148,18 @@ void APingPongGameModeBase::PlayerGoal(int8 PlayerID)
 			}
 		}
 	}
+}
+
+bool APingPongGameModeBase::StartGame()
+{
+	TArray<APingPongBall*> FoundActors;
+	utils::FindAllActors<APingPongBall>(GetWorld(), FoundActors);
+	if (FoundActors.Num() > 0)
+	{
+		auto Ball { FoundActors.Last() };
+		Ball->StartMove();
+		return true;
+	}
+	return false;
 }
 

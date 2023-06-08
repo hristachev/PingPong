@@ -19,7 +19,15 @@ void APingPongPlayerController::SetStartTransfrorm(FTransform NewStartTransform)
 	StartTransform = NewStartTransform;
 }
 
-void APingPongPlayerController::Initialize_Implementation(int8 NewPlayerID, APingPongGoal* NewGoal)
+void APingPongPlayerController::Client_SetHUDWindow_Implementation(EPlayerWindowId windowId)
+{
+	if (ScoreWidget)
+	{
+		ScoreWidget->SwitchWidget(static_cast<int32>(windowId));
+	}
+}
+
+void APingPongPlayerController::Initialize_Implementation(int32 NewPlayerID, APingPongGoal* NewGoal)
 {
 	if (Platform)
 	{
@@ -32,7 +40,7 @@ void APingPongPlayerController::Initialize_Implementation(int8 NewPlayerID, APin
 	PongGoal->SetPlayerID(PlayerID);
 }
 
-bool APingPongPlayerController::Initialize_Validate(int8 NewPlayerID, APingPongGoal* NewGoal)
+bool APingPongPlayerController::Initialize_Validate(int32 NewPlayerID, APingPongGoal* NewGoal)
 {
 	return (NewPlayerID != 0 && NewGoal != nullptr);
 

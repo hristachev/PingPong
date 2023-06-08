@@ -11,6 +11,14 @@ class APingPongGoal;
 /**
  * 
  */
+
+UENUM()
+enum class EPlayerWindowId : uint8
+{
+	WaitForAnotherPlayers = 0,
+	Game = 1
+};
+
 UCLASS()
 class PINGPONG_API APingPongPlayerController : public APlayerController
 {
@@ -21,13 +29,13 @@ protected:
 	FTransform StartTransform;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<class APingPongPlatform> PlatformClass;
+	TSubclassOf<APingPongPlatform> PlatformClass;
 	
 	UPROPERTY()
-	class APingPongPlatform* Platform;
+	APingPongPlatform* Platform;
 
 	UPROPERTY(Replicated)
-	int8 PlayerID = 0;
+	int32 PlayerID = 0;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	APingPongGoal* PongGoal;
@@ -46,16 +54,19 @@ public:
 	void SetStartTransfrorm(FTransform NewStartTransform);
 
 	UFUNCTION()
-	FORCEINLINE int8 GetPlayerID() const { return PlayerID; }
+	FORCEINLINE int32 GetPlayerID() const { return PlayerID; }
 	
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Initialize(int8 NewPlayerID, APingPongGoal* NewGoal);
+	void Initialize(int32 NewPlayerID, APingPongGoal* NewGoal);
 
 	UFUNCTION(Client, Reliable, WithValidation)
 	void Client_InitializeHUD();
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetHUDWindow(EPlayerWindowId windowId);
 	
 	UFUNCTION(Server, Reliable, WithValidation)
-	void SpawnPlatform(TSubclassOf<class APingPongPlatform> PlatfromClass);
+	void SpawnPlatform(TSubclassOf<APingPongPlatform> PlatfromClass);
 
 	UFUNCTION(Client, Reliable)
 	void UpdateWidgetPlayerScore(int32 Score);

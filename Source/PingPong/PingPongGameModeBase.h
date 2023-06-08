@@ -8,7 +8,8 @@
 
 #include "PingPongGameModeBase.generated.h"
 
-class UScoreWidget;
+class APingPongPlayerController;
+class APlayerStart;
 /**
  * 
  */
@@ -20,10 +21,10 @@ class PINGPONG_API APingPongGameModeBase : public AGameModeBase
 protected:
 	
     UPROPERTY()
-    class APingPongPlayerController* Player1;
+	APingPongPlayerController* Player1;
 	
     UPROPERTY()
-    class APingPongPlayerController* Player2;
+	APingPongPlayerController* Player2;
 	
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     APlayerStart* Player1Start;
@@ -43,4 +44,7 @@ public:
     virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	void PlayerGoal(int8 PlayerID);
+
+private:
+	bool StartGame();
 };

@@ -19,7 +19,7 @@ protected:
 	UStaticMeshComponent* BodyMesh;
 
 	UPROPERTY(Replicated)
-	int8 PlayerID = 0;
+	int32 PlayerID = 0;
 public:	
 	// Sets default values for this actor's properties
 	APingPongGoal();
@@ -32,7 +32,7 @@ protected:
 	void Server_GoalCheck();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SetPlayerID(int8 ID);
+	void Server_SetPlayerID(int32 ID);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -40,7 +40,7 @@ public:
 	UFUNCTION()
 	void GoalCheck();
 
-	void SetPlayerID(int8 ID);
+	void SetPlayerID(int32 ID);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

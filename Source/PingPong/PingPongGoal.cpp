@@ -46,12 +46,12 @@ bool APingPongGoal::Server_GoalCheck_Validate()
 	return true;
 }
 
-void APingPongGoal::Server_SetPlayerID_Implementation(int8 ID)
+void APingPongGoal::Server_SetPlayerID_Implementation(int32 ID)
 {
 	PlayerID = ID;
 }
 
-bool APingPongGoal::Server_SetPlayerID_Validate(int8 ID)
+bool APingPongGoal::Server_SetPlayerID_Validate(int32 ID)
 {
 	return ID !=0;
 }
@@ -74,7 +74,7 @@ void APingPongGoal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME_CONDITION(APingPongGoal, PlayerID, COND_SimulatedOnly);
 }
 
-void APingPongGoal::SetPlayerID(int8 ID)
+void APingPongGoal::SetPlayerID(int32 ID)
 {
 	Server_SetPlayerID(ID);
 }

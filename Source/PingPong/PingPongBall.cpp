@@ -13,6 +13,23 @@
 #include "Particles/ParticleSystem.h"
 #include "Net/UnrealNetwork.h"
 
+
+namespace utils
+{
+	template <typename Class, typename ResClass, typename BindRetType = void, typename... BindArgTypes>
+	TSharedPtr<FStreamableHandle> AsyncLoad(
+		Class* InObject,
+		typename TMemFunPtrType<false, Class, BindRetType(BindArgTypes...)>::Type BindFunc,
+		TSoftObjectPtr<ResClass> ClassRef)
+	{
+		FStreamableDelegate LoadMeshDelegate;
+		LoadMeshDelegate.BindUObject(InObject, BindFunc);
+		UAssetManager& AssetManager { UAssetManager::Get() };
+		FStreamableManager& StreamableManager { AssetManager.GetStreamableManager() };
+		return StreamableManager.RequestAsyncLoad(ClassRef.ToSoftObjectPath(), LoadMeshDelegate);
+	}
+}
+
 // Sets default values
 APingPongBall::APingPongBall()
 {
@@ -33,42 +50,59 @@ void APingPongBall::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UStaticMesh* LoadBodyMesh = nullptr;
-	UMaterial* LoadBodyMaterial = nullptr;
-	LoadBodyResources(LoadBodyMesh, LoadBodyMaterial);
-	if (LoadBodyMesh)
-	{
-		BodyMesh->SetStaticMesh(LoadBodyMesh);
-		if (LoadBodyMaterial)
-		{
-			BodyMesh->SetMaterial(0, LoadBodyMaterial);
-		}
-	}
-
-	HitEffect = LoadObject<UParticleSystem>(
-		nullptr,
-		TEXT("/Game/StarterContent/Particles/P_Explosion.P_Explosion"),
-		nullptr,
-		LOAD_None,
-		nullptr);
+	LoadBodyMesh();
+	LoadHitEffect();
 	
 }
 
-void APingPongBall::LoadBodyResources(UStaticMesh*& OutBodyMesh, UMaterial*& OutBodyMaterial)
+void APingPongBall::LoadBodyMesh()
 {
-	FStreamableManager& StreamableManager = UAssetManager::Get().GetStreamableManager();
-	if (BodyMeshRef.IsPending())
-	{
-		const FSoftObjectPath& AssetMeshRef = BodyMeshRef.ToSoftObjectPath();
-		BodyMeshRef = Cast<UStaticMesh>(StreamableManager.LoadSynchronous(AssetMeshRef));
-		OutBodyMesh = BodyMeshRef.Get();
-	}
+	auto AssetHandle { utils::AsyncLoad<APingPongBall, UStaticMesh>(
+		this, &APingPongBall::OnBodyMeshLoaded,BodyMeshRef) };
+	AssetHandles.Add(AssetHandle);
+}
 
+void APingPongBall::OnBodyMeshLoaded()
+{
+	for (const auto &AssetHandle : AssetHandles)
+	{
+		if (auto LoadedMesh = Cast<UStaticMesh>(AssetHandle.Get()->GetLoadedAsset()))
+		{
+			BodyMesh->SetStaticMesh(LoadedMesh);
+			if (auto Material = LoadBodyMaterial())
+			{
+				BodyMesh->SetMaterial(0, Material);
+			}
+		}
+	}
+}
+
+UMaterial* APingPongBall::LoadBodyMaterial()
+{
+	FStreamableManager& StreamableManager { UAssetManager::Get().GetStreamableManager() };
 	if (BodyMaterialRef.IsPending())
 	{
-		const FSoftObjectPath& AssetMaterialRef = BodyMaterialRef.ToSoftObjectPath();
+		const FSoftObjectPath& AssetMaterialRef { BodyMaterialRef.ToSoftObjectPath() };
 		BodyMeshRef = Cast<UMaterial>(StreamableManager.LoadSynchronous(AssetMaterialRef));
-		OutBodyMaterial = BodyMaterialRef.Get();
+	}
+	return BodyMaterialRef.Get();
+}
+
+void APingPongBall::LoadHitEffect()
+{
+	auto AssetHandle { utils::AsyncLoad<APingPongBall, UParticleSystem>(
+		this, &APingPongBall::OnHitEffectLoaded, HitEffectRef) };
+	AssetHandles.Add(AssetHandle);
+}
+
+void APingPongBall::OnHitEffectLoaded()
+{
+	for (const auto &AssetHandle : AssetHandles)
+	{
+		if (auto LoadedHitEffect = Cast<UParticleSystem>(AssetHandle.Get()->GetLoadedAsset()))
+		{
+			HitEffect = LoadedHitEffect;
+		}
 	}
 }
 
